@@ -1,0 +1,136 @@
+/* ======== ESTILOS GENERALES ======== */
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background-color: #f9f9f9; /* fondo claro */
+}
+
+/* ======== CONTENEDOR PRINCIPAL ======== */
+.form-container {
+  max-width: 400px;
+  margin: 80px auto; /* centra vertical y horizontal */
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* ======== ANIMACIÓN ======== */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 1.2s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px); /* desde abajo */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ======== LOGO ======== */
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo-container img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.logo-container h1 {
+  color: #0d9488;
+  font-size: 1.3rem;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+/* ======== TÍTULO Y TEXTO ======== */
+.form-container h2 {
+  color: #0d9488;
+  margin-bottom: 5px;
+}
+
+.form-container p {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+/* ======== FORMULARIO ======== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  text-align: left;
+}
+
+/* ===== LABELS ===== */
+.login-form label {
+  font-weight: 600;
+  color: #0d9488;
+}
+
+/* ===== INPUTS ===== */
+.login-form input {
+  padding: 10px;
+  border: 2px solid #0d9488;
+  border-radius: 8px;
+  transition: 0.3s;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 6px rgba(13, 148, 136, 0.4);
+}
+
+/* ===== BOTÓN ===== */
+.login-form button {
+  background-color: #0d9488;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-form button:hover {
+  background-color: #0b7a72;
+}
+
+/* ===== LINK OLVIDÉ CONTRASEÑA ===== */
+.forgot-link {
+  display: block;
+  margin-top: 10px;
+  text-align: center;
+  color: #0d9488;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* ======== FOOTER ======== */
+.login-footer {
+  margin-top: 40px;
+  text-align: center;
+  padding: 15px;
+  background-color: #0d9488;
+  color: white;
+  font-size: 0.9rem;
+}
