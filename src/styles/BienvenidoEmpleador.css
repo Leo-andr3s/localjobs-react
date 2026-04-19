@@ -1,0 +1,113 @@
+/* --- CONTENEDOR PRINCIPAL --- */
+.pantalla-motivacional {
+  background-color: #ffffff;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+/* --- SALUDO SUPERIOR --- */
+.saludo-usuario {
+  font-size: 1.8rem;
+  color: #555;
+  margin-bottom: 20px;
+  font-weight: 400;
+  width: 100%;
+  text-align: center;
+}
+
+/* --- IMAGEN DE CABECERA --- */
+.imagen-cabecera {
+  width: 90%;
+  max-width: 700px;
+  height: auto;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin: 0 auto;
+  display: block;
+}
+
+/* --- TÍTULO PRINCIPAL --- */
+.titulo-gracias {
+  font-size: 6rem;
+  color: #0d9488;
+  font-weight: 900;
+  margin: 30px 0 10px 0;
+  text-transform: uppercase;
+  width: 100%;
+  display: block;
+  text-align: center;
+}
+
+/* --- TEXTO PROYECTO SENA --- */
+.texto-agradecimiento-sena {
+  font-size: 1.5rem;
+  color: #0d9488;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+  line-height: 1.5;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* --- FRASE MOTIVACIONAL --- */
+.texto-motivacional {
+  font-size: 1.8rem;
+  color: #0d9488;
+  line-height: 1.4;
+  font-style: italic;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* --- IMAGEN CIRCULAR --- */
+.imagen-ok {
+  width: 180px;
+  height: 180px;
+  min-width: 180px;
+  min-height: 180px;
+  border-radius: 50%;
+  border: 6px solid #0d9488;
+  margin: 25px auto;
+  object-fit: cover;
+  display: block;
+}
+
+/* --- GIF DE CIERRE --- */
+.gif-final {
+  width: 300px;
+  max-width: 80%;
+  height: auto;
+  margin: 20px auto;
+  border-radius: 10px;
+  display: block;
+}
+
+/* --- ANIMACIÓN --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- CLASE ACTIVADORA --- */
+.aparecer {
+  animation: fadeInUp 1.5s ease-out forwards;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

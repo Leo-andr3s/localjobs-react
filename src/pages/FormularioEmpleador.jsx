@@ -42,15 +42,16 @@ function RegistroEmpleador() {
           <label>Número de documento</label>
           <input type="text" placeholder="Ingrese su número de documento" required />
 
-          <label>Correo electrónico</label>
-          <input type="email" placeholder="empresa@ejemplo.com" required />
 
           <label>Teléfono</label>
           <input type="tel" placeholder="3101010101" required />
 
           <label>Ubicación</label>
           <input type="text" placeholder="Dirección principal" />
-
+          
+          <label>Correo electrónico</label>
+          <input type="email" placeholder="empresa@ejemplo.com" required />
+          
           <label>Contraseña</label>
           <input type="password" placeholder="Crea una contraseña segura" required />
 

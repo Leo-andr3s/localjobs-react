@@ -44,6 +44,12 @@ function RegistroTrabajador() {
 
           <label>Correo electrónico</label>
           <input type="email" placeholder="tucorreo@ejemplo.com" required />
+          
+          <label>Contraseña</label>
+          <input type="password" placeholder="Crea una contraseña segura" required />
+          
+          <label>Confirmar contraseña</label>
+          <input type="password" placeholder="Repite la contraseña" required />
 
           <label>Teléfono</label>
           <input type="tel" placeholder="3101010101" required />

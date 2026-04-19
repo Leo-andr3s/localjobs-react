@@ -1,0 +1,86 @@
+/* --- SALUDO SUPERIOR --- */
+.saludo-usuario {
+  font-size: 1.8rem;
+  color: #0d9488;
+  margin-bottom: 20px;
+  font-weight: 400;
+  width: 100%;
+  text-align: right;
+  padding-right: 5%;
+}
+.pantalla-motivacional {
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+}
+
+.imagen-cabecera {
+  width: 100%;
+  max-width: 700px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.titulo-gracias {
+  font-size: 6rem;
+  color: #0d9488;
+  font-weight: 900;
+  margin: 30px 0;
+  text-transform: uppercase;
+}
+
+.texto-agradecimiento-sena {
+  font-size: 1.5rem; /* Tamaño mediano para que no compita con el GRACIAS */
+  color: #0d9488;    /* Un verde elegante */
+  max-width: 600px;  /* Para que no se estire demasiado en pantallas anchas */
+  margin: 0 auto 30px auto; /* Centrado y con espacio abajo */
+  line-height: 1.5;
+  font-weight: 500;
+}
+.mensaje-contenedor {
+  max-width: 650px;
+  margin-bottom: 30px;
+}
+
+.texto-motivacional {
+  font-size: 1.8rem;
+  color: #0d9488;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.imagen-ok {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 5px solid #0d9488;
+  margin-top: 20px;
+  object-fit: cover;
+}
+
+.gif-final {
+  width: 350px;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+/* --- ANIMACIÓN DE APARICIÓN --- */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.aparecer {
+  animation: fadeInUp 1.2s ease-out forwards;
+}
