@@ -32,7 +32,7 @@ const BienvenidoEmpleador = () => {
 
   const cargarVacantes = async () => {
     try {
-      const res = await axios.get(`http://localhost:3001/vacantes/empleador/${usuarioGuardado.id}`);
+      const res = await axios.get(`${API_URL}/vacantes/empleador/${usuarioGuardado.id}`);
       setVacantes(res.data);
     } catch (err) {
       console.error('Error al cargar vacantes:', err);
@@ -60,7 +60,7 @@ const BienvenidoEmpleador = () => {
     try {
       if (vacanteEditandoId) {
         // MODO EDICIÓN (PUT)
-        await axios.put(`http://localhost:3001/vacantes/${vacanteEditandoId}`, formData);
+        await axios.put(`${API_URL}/vacantes/${vacanteEditandoId}`, formData);
         setMensaje('¡Vacante actualizada con éxito!');
       } else {
         // MODO CREACIÓN (POST)
@@ -68,7 +68,7 @@ const BienvenidoEmpleador = () => {
           empleador_id: usuarioGuardado.id,
           ...formData
         };
-        await axios.post('http://localhost:3001/vacantes', payload);
+        await axios.post(`${API_URL}/vacantes`, payload);
         setMensaje('¡Vacante publicada con éxito!');
       }
 
@@ -102,34 +102,34 @@ const BienvenidoEmpleador = () => {
     setFormData({ titulo: '', descripcion: '', ubicacion: '', salario: '' });
   };
 
-  // Función para eliminar vacante
-  const eliminarVacante = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta vacante?')) {
-      try {
-        await axios.delete(`http://localhost:3001/vacantes/${id}`);
-        setMensaje('Vacante eliminada correctamente');
-        cargarVacantes();
-        if (vacanteSeleccionada) {
-          setVacanteSeleccionada(null);
-          setPostulantes([]);
-        }
-      } catch (err) {
-        console.error('Error al eliminar:', err);
-        setError('No se pudo eliminar la vacante');
-      }
-    }
-  };
-
-  // Función para ver los postulantes de una vacante
-  const verPostulantes = async (vacanteId, titulo) => {
+ // Función para eliminar vacante
+ const eliminarVacante = async (id) => {
+  if (window.confirm('¿Estás seguro de que deseas eliminar esta vacante?')) {
     try {
-      const res = await axios.get(`http://localhost:3001/vacantes/${vacanteId}/postulaciones`);
-      setPostulantes(res.data);
-      setVacanteSeleccionada(titulo);
+      await axios.delete(`${API_URL}/vacantes/${id}`);
+      setMensaje('Vacante eliminada correctamente');
+      cargarVacantes();
+      if (vacanteSeleccionada) {
+        setVacanteSeleccionada(null);
+        setPostulantes([]);
+      }
     } catch (err) {
-      console.error('Error al obtener postulantes:', err);
+      console.error('Error al eliminar:', err);
+      setError('No se pudo eliminar la vacante');
     }
-  };
+  }
+};
+
+// Función para ver los postulantes de una vacante
+const verPostulantes = async (vacanteId, titulo) => {
+  try {
+    const res = await axios.get(`${API_URL}/vacantes/${vacanteId}/postulaciones`);
+    setPostulantes(res.data);
+    setVacanteSeleccionada(titulo);
+  } catch (err) {
+    console.error('Error al obtener postulantes:', err);
+  }
+};
 
   return (
     <div style={{ 

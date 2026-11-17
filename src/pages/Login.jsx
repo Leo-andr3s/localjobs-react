@@ -12,7 +12,9 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://127.0.0.1:3001/login", {
+      const API_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:3001";
+
+      const response = await axios.post(`${API_URL}/login`, {
         email,
         password,
       });

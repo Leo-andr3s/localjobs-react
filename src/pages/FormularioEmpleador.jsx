@@ -35,8 +35,10 @@ function FormularioEmpleador() {
       return;
     }
 
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
     try {
-      const response = await axios.post("http://localhost:3001/registrar-empleador", formData);
+      const response = await axios.post(`${API_URL}/registrar-empleador`, formData);
       
       if (response.status === 200 || response.status === 201) {
         const datosUsuario = response.data.usuario || {

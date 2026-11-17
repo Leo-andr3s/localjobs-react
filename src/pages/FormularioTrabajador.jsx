@@ -34,11 +34,14 @@ function RegistroTrabajador() {
       return;
     }
 
+    const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
     try {
-      const response = await axios.post("http://localhost:3001/registrar-trabajador", formData);
+      const response = await axios.post(`${API_URL}/registrar-trabajador`, formData);
       
       if (response.status === 200) {
         alert("¡Registro exitoso!");
+
         // Saltamos enviando el nombre en el estado
         navigate("/bienvenido-trabajador", { 
           state: { nombre: formData.nombre_completo } 

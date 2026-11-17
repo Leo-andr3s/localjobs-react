@@ -22,14 +22,16 @@ function BienvenidoTrabajador() {
     fetchDatosIniciales();
   }, [trabajadorId]);
 
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
   const fetchDatosIniciales = async () => {
     try {
       // 1. Obtener todas las vacantes disponibles
-      const resVacantes = await axios.get('http://localhost:3001/vacantes');
+      const resVacantes = await axios.get(`${API_URL}/vacantes`);
       setVacantes(resVacantes.data);
 
       // 2. Obtener las postulaciones de este trabajador
-      const resPostulaciones = await axios.get(`http://localhost:3001/postulaciones/trabajador/${trabajadorId}`);
+      const resPostulaciones = await axios.get(`${API_URL}/postulaciones/trabajador/${trabajadorId}`);
       const ids = new Set(resPostulaciones.data.map(p => p.vacante_id));
       setPostulacionesIds(ids);
     } catch (error) {
@@ -39,7 +41,7 @@ function BienvenidoTrabajador() {
 
   const handlePostularse = async (vacanteId) => {
     try {
-      await axios.post('http://localhost:3001/postulaciones', {
+      await axios.post(`${API_URL}/postulaciones`, {
         vacante_id: vacanteId,
         trabajador_id: trabajadorId
       });
