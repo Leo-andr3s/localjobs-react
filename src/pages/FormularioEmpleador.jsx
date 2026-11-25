@@ -39,18 +39,24 @@ function FormularioEmpleador() {
 
     try {
       const response = await axios.post(`${API_URL}/registrar-empleador`, formData);
-      
+
       if (response.status === 200 || response.status === 201) {
-        const datosUsuario = response.data.usuario || {
-          id: response.data.id || response.data.empleadorId,
-          empresa: formData.nombre_empresa,
-          nombre_completo: formData.nombre_empresa
+        const usuarioBackend = response.data.usuario || {};
+        const datosUsuario = {
+          id: usuarioBackend.id || response.data.id || response.data.empleadorId,
+          tipo: usuarioBackend.tipo || "empleador",
+          empresa: usuarioBackend.empresa || formData.nombre_empresa,
+          nombre_completo: usuarioBackend.nombre_completo || formData.nombre_empresa,
+          nombre: usuarioBackend.nombre || formData.nombre_empresa,
+          email: usuarioBackend.email || formData.email
         };
 
-        localStorage.setItem('usuario', JSON.stringify(datosUsuario));
+        localStorage.setItem("usuario", JSON.stringify(datosUsuario));
 
         alert("¡Registro exitoso! Ya puedes publicar tu vacante.");
-        navigate("/bienvenido-empleador");
+        navigate("/bienvenido-empleador", {
+          state: { usuario: datosUsuario }
+        });
       }
     } catch (err) {
       console.error("Error al registrar empresa:", err);
@@ -60,7 +66,7 @@ function FormularioEmpleador() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', fontFamily: 'Arial, sans-serif' }}>
-      
+
       {/* BARRA SUPERIOR VERDE INSTITUCIONAL */}
       <header style={{ backgroundColor: '#00897b', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#fff' }}>LocalJobs</h1>
@@ -74,15 +80,15 @@ function FormularioEmpleador() {
 
       {/* CONTENEDOR CON ANIMACIÓN FADE-IN Y TARJETA CENTRADA */}
       <div className="fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '40px 20px', flex: 1 }}>
-        <div style={{ 
-          background: '#ffffff', 
-          padding: '40px 50px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)', 
-          width: '100%', 
-          maxWidth: '520px' 
+        <div style={{
+          background: '#ffffff',
+          padding: '40px 50px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+          width: '100%',
+          maxWidth: '520px'
         }}>
-          
+
           <h2 style={{ color: '#00897b', textAlign: 'center', marginBottom: '8px', fontSize: '26px', fontWeight: 'bold' }}>Registro de Empleador</h2>
           <p style={{ color: '#666', textAlign: 'center', marginBottom: '30px', fontSize: '14px', lineHeight: '1.4' }}>
             Completa tus datos para publicar ofertas de trabajo en LocalJobs.
@@ -94,13 +100,13 @@ function FormularioEmpleador() {
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Nombre del empleador o empresa</label>
-              <input 
-                type="text" 
-                name="nombre_empresa" 
-                placeholder="Ej. Panadería La Espiga" 
+              <input
+                type="text"
+                name="nombre_empresa"
+                placeholder="Ej. Panadería La Espiga"
                 value={formData.nombre_empresa}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
@@ -117,36 +123,36 @@ function FormularioEmpleador() {
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Número de documento</label>
-              <input 
-                type="text" 
-                name="numero_documento" 
-                placeholder="Ingrese su número de documento" 
+              <input
+                type="text"
+                name="numero_documento"
+                placeholder="Ingrese su número de documento"
                 value={formData.numero_documento}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Teléfono</label>
-              <input 
-                type="tel" 
-                name="telefono" 
-                placeholder="3101010101" 
+              <input
+                type="tel"
+                name="telefono"
+                placeholder="3101010101"
                 value={formData.telefono}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Ubicación</label>
-              <input 
-                type="text" 
-                name="ubicacion" 
-                placeholder="Dirección principal" 
+              <input
+                type="text"
+                name="ubicacion"
+                placeholder="Dirección principal"
                 value={formData.ubicacion}
                 onChange={handleChange}
                 style={inputStyle}
@@ -155,45 +161,45 @@ function FormularioEmpleador() {
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Correo electrónico</label>
-              <input 
-                type="email" 
-                name="email" 
-                placeholder="empresa@ejemplo.com" 
+              <input
+                type="email"
+                name="email"
+                placeholder="empresa@ejemplo.com"
                 value={formData.email}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Contraseña</label>
-              <input 
-                type="password" 
-                name="password" 
-                placeholder="Crea una contraseña segura" 
+              <input
+                type="password"
+                name="password"
+                placeholder="Crea una contraseña segura"
                 value={formData.password}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: '#00897b', fontWeight: 'bold', marginBottom: '8px', fontSize: '14px' }}>Confirmar contraseña</label>
-              <input 
-                type="password" 
-                name="confirmarPassword" 
-                placeholder="Repite la contraseña" 
+              <input
+                type="password"
+                name="confirmarPassword"
+                placeholder="Repite la contraseña"
                 value={formData.confirmarPassword}
                 onChange={handleChange}
-                required 
+                required
                 style={inputStyle}
               />
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "25px", fontSize: "14px", color: "#555" }}>
-              <input type="checkbox" required style={{ width: '18px', height: '18px', accentColor: '#00897b', cursor: 'pointer' }} /> 
+              <input type="checkbox" required style={{ width: '18px', height: '18px', accentColor: '#00897b', cursor: 'pointer' }} />
               <span>Acepto términos y condiciones</span>
             </div>
 

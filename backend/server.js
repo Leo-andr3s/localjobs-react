@@ -60,7 +60,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// Registrar Trabajador
+// Registrar Trabajador (devuelve usuario con id recién creado para auto-login)
 app.post('/registrar-trabajador', (req, res) => {
   const { nombre_completo, email, password, telefono, ciudad, oficio, empresa } = req.body;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -69,18 +69,42 @@ app.post('/registrar-trabajador', (req, res) => {
     return res.status(400).json({ error: "El formato del correo electrónico es inválido." });
   }
 
-  const sql = `INSERT INTO FormularioTrabajador (nombre_completo, email, password, telefono, ciudad, oficio, empresa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+  const sql = `
+    INSERT INTO FormularioTrabajador
+    (nombre_completo, email, password, telefono, ciudad, oficio, empresa)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
 
-  db.query(sql, [nombre_completo, email, password, telefono, ciudad, oficio, empresa || null], (err) => {
-    if (err) {
-      console.error("Error al registrar trabajador:", err);
-      return res.status(500).json({ error: "Error al registrar" });
+  db.query(
+    sql,
+    [nombre_completo, email, password, telefono, ciudad, oficio, empresa || null],
+    (err, result) => {
+      if (err) {
+        console.error("Error al registrar trabajador:", err);
+        return res.status(500).json({ error: "Error al registrar" });
+      }
+
+      const usuarioCreado = {
+        id: result.insertId,
+        tipo: 'trabajador',
+        nombre_completo,
+        nombre: nombre_completo,
+        email,
+        telefono,
+        ciudad,
+        oficio,
+        empresa: empresa || null
+      };
+
+      res.status(200).json({
+        message: "Trabajador registrado con éxito",
+        usuario: usuarioCreado
+      });
     }
-    res.status(200).json({ message: "Trabajador registrado con éxito" });
-  });
+  );
 });
 
-// Registrar Empleador (Adaptado a las nuevas columnas de la Opción 1)
+// Registrar Empleador (devuelve usuario con id recién creado para auto-login)
 app.post('/registrar-empleador', (req, res) => {
   const {
     nombre_empresa,
@@ -117,7 +141,9 @@ app.post('/registrar-empleador', (req, res) => {
       message: "Empleador registrado con éxito",
       usuario: {
         id: result.insertId,
+        tipo: 'empleador',
         empresa: nombre_empresa,
+        nombre_completo: nombre_empresa,
         nombre: nombre_empresa,
         email: email
       }

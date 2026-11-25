@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // Solo una vez
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "../styles/FormularioTrabajador.css";
 
@@ -36,20 +36,46 @@ function RegistroTrabajador() {
 
     const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
+    // Adaptamos los campos al formato que espera /registrar-trabajador en el backend
+    const payload = {
+      nombre_completo: formData.nombre_completo,
+      email: formData.email,
+      password: formData.password,
+      telefono: formData.telefono,
+      ciudad: formData.ubicacion,
+      oficio: formData.profesion_oficio,
+      empresa: formData.experiencia || null,
+      tipo_documento: formData.tipo_documento,
+      numero_documento: formData.numero_documento,
+    };
+
     try {
-      const response = await axios.post(`${API_URL}/registrar-trabajador`, formData);
-      
+      const response = await axios.post(`${API_URL}/registrar-trabajador`, payload);
+
       if (response.status === 200) {
+        const usuarioRegistrado = response.data.usuario || {
+          tipo: "trabajador",
+          nombre_completo: formData.nombre_completo,
+          nombre: formData.nombre_completo,
+          email: formData.email,
+          telefono: formData.telefono,
+          ciudad: formData.ubicacion,
+          oficio: formData.profesion_oficio,
+        };
+
+        localStorage.setItem("usuario", JSON.stringify(usuarioRegistrado));
         alert("¡Registro exitoso!");
 
-        // Saltamos enviando el nombre en el estado
-        navigate("/bienvenido-trabajador", { 
-          state: { nombre: formData.nombre_completo } 
+        navigate("/bienvenido-trabajador", {
+          state: {
+            usuario: usuarioRegistrado,
+            nombre: usuarioRegistrado.nombre_completo || usuarioRegistrado.nombre,
+          },
         });
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error al conectar con el servidor");
+      alert(error.response?.data?.error || "Error al conectar con el servidor");
     }
   };
 
@@ -72,20 +98,20 @@ function RegistroTrabajador() {
         <p>Crea tu cuenta para encontrar oportunidades laborales cerca de ti.</p>
 
         <form className="register-form" onSubmit={handleSubmit}>
-          
+
           <label>Nombre completo</label>
-          <input 
-            type="text" 
-            name="nombre_completo" 
-            placeholder="Ingresa tu nombre y apellidos" 
-            onChange={handleChange} 
-            required 
+          <input
+            type="text"
+            name="nombre_completo"
+            placeholder="Ingresa tu nombre y apellidos"
+            onChange={handleChange}
+            required
           />
 
           <label>Tipo de documento</label>
-          <select 
-            name="tipo_documento" 
-            onChange={handleChange} 
+          <select
+            name="tipo_documento"
+            onChange={handleChange}
             required
             defaultValue=""
           >
@@ -101,10 +127,10 @@ function RegistroTrabajador() {
 
           <label>Correo electrónico</label>
           <input type="email" name="email" placeholder="tucorreo@ejemplo.com" onChange={handleChange} required />
-          
+
           <label>Contraseña</label>
           <input type="password" name="password" placeholder="Mínimo 8 caracteres" onChange={handleChange} required />
-          
+
           <label>Confirmar contraseña</label>
           <input type="password" name="confirmarPassword" placeholder="Repite la contraseña" onChange={handleChange} required />
 

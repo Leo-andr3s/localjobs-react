@@ -7,22 +7,34 @@ function BienvenidoTrabajador() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Obtenemos los datos del trabajador que vienen desde el login
-  const usuario = location.state?.usuario || {};
-  const trabajadorId = usuario.id || 1;
-  const nombreTrabajador = location.state?.nombre || usuario.nombre || "Trabajador";
+  // Obtener usuario desde location.state o, como respaldo, desde localStorage
+  const usuarioStorage = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('usuario')) || {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const usuario = location.state?.usuario || usuarioStorage;
+  const trabajadorId = usuario?.id || null;
+  const nombreTrabajador =
+    location.state?.nombre ||
+    usuario?.nombre_completo ||
+    usuario?.nombre ||
+    "Trabajador";
 
   // Estados para las vacantes, postulaciones hechas y mensajes
   const [vacantes, setVacantes] = useState([]);
   const [postulacionesIds, setPostulacionesIds] = useState(new Set());
   const [mensaje, setMensaje] = useState('');
 
-  // Cargar las vacantes y las postulaciones del trabajador al montar el componente
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+
+  // Cargar las vacantes y las postulaciones del trabajador al montar o cambiar de trabajadorId
   useEffect(() => {
     fetchDatosIniciales();
   }, [trabajadorId]);
-
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
   const fetchDatosIniciales = async () => {
     try {
@@ -30,70 +42,81 @@ function BienvenidoTrabajador() {
       const resVacantes = await axios.get(`${API_URL}/vacantes`);
       setVacantes(resVacantes.data);
 
-      // 2. Obtener las postulaciones de este trabajador
-      const resPostulaciones = await axios.get(`${API_URL}/postulaciones/trabajador/${trabajadorId}`);
-      const ids = new Set(resPostulaciones.data.map(p => p.vacante_id));
-      setPostulacionesIds(ids);
+      // 2. Obtener las postulaciones solo si existe un ID válido del trabajador actual
+      if (trabajadorId) {
+        const resPostulaciones = await axios.get(`${API_URL}/postulaciones/trabajador/${trabajadorId}`);
+        const ids = new Set(resPostulaciones.data.map(p => p.vacante_id));
+        setPostulacionesIds(ids);
+      } else {
+        setPostulacionesIds(new Set());
+      }
     } catch (error) {
       console.error('Error al cargar datos:', error);
     }
   };
 
   const handlePostularse = async (vacanteId) => {
+    if (!trabajadorId) {
+      setMensaje('No se identificó tu cuenta de trabajador. Vuelve a iniciar sesión.');
+      setTimeout(() => setMensaje(''), 4000);
+      return;
+    }
+
     try {
       await axios.post(`${API_URL}/postulaciones`, {
         vacante_id: vacanteId,
         trabajador_id: trabajadorId
       });
-      
+
       // Actualizamos el estado local agregando esta vacante a las postuladas
       setPostulacionesIds(prev => new Set(prev).add(vacanteId));
-      
+
       setMensaje('¡Te has postulado con éxito a la vacante!');
       setTimeout(() => setMensaje(''), 4000);
     } catch (error) {
       console.error('Error al postularse:', error);
       // Si el backend rechaza por duplicado o ya está postulado, actualizamos el botón de igual forma
       setPostulacionesIds(prev => new Set(prev).add(vacanteId));
-      setMensaje('Ya te encuentras postulado a esta oferta.');
+      setMensaje(error.response?.data?.error || 'Ya te encuentras postulado a esta oferta.');
       setTimeout(() => setMensaje(''), 4000);
     }
   };
 
   const handleLogout = () => {
-    navigate("/");
+    localStorage.removeItem('usuario');
+    navigate("/", { state: null });
   };
 
   return (
     <div className="pantalla-motivacional aparecer" style={{ paddingBottom: '40px' }}>
-      
+
       {/* BARRA SUPERIOR CON EL COLOR CORPORATIVO */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        width: '100%', 
-        padding: '12px 30px', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        padding: '12px 30px',
         boxSizing: 'border-box',
-        backgroundColor: '#00857A', 
+        backgroundColor: '#00857A',
         marginBottom: '25px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
         <h3 className="saludo-usuario" style={{ margin: 0, fontSize: '1.2rem', color: '#FFFFFF', fontWeight: 'bold' }}>
           Bienvenido, {nombreTrabajador}
         </h3>
-        <button 
-          onClick={handleLogout} 
-          style={{ 
-            background: '#FFFFFF', 
-            color: '#000000', 
-            border: 'none', 
-            padding: '8px 16px', 
-            borderRadius: '5px', 
-            cursor: 'pointer', 
+        <button
+          onClick={handleLogout}
+          style={{
+            background: '#FFFFFF',
+            color: '#000000',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '5px',
+            cursor: 'pointer',
             fontWeight: 'bold',
             fontSize: '0.9rem',
-            whiteSpace: 'nowrap', 
+            whiteSpace: 'nowrap',
             boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
           }}
         >
@@ -105,7 +128,13 @@ function BienvenidoTrabajador() {
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <h2 style={{ color: '#00857A' }}>Panel de Oportunidades Laborales</h2>
         <p style={{ color: '#555' }}>Explora las ofertas de empleo disponibles y postúlate fácilmente.</p>
-        
+
+        {!trabajadorId && (
+          <p style={{ color: '#c62828', fontWeight: 'bold', marginTop: '8px' }}>
+            Sesión sin ID de trabajador detectado. Inicia sesión nuevamente para postularte.
+          </p>
+        )}
+
         {/* Mensaje informativo con el color corporativo #00857A */}
         {mensaje && (
           <p style={{ color: '#00857A', fontWeight: 'bold', marginTop: '10px' }}>
@@ -130,19 +159,19 @@ function BienvenidoTrabajador() {
                   <p style={{ margin: '4px 0' }}><strong>Ubicación:</strong> {v.ubicacion}</p>
                   <p style={{ margin: '4px 0' }}><strong>Salario:</strong> {v.salario || 'A convenir'}</p>
                   <p style={{ margin: '12px 0 15px 0', color: '#444' }}>{v.descripcion}</p>
-                  
-                  <button 
+
+                  <button
                     onClick={() => !yaPostulado && handlePostularse(v.id)}
-                    disabled={yaPostulado}
-                    style={{ 
-                      background: yaPostulado ? '#00857A' : '#00857A', 
-                      color: '#FFF', 
-                      border: 'none', 
-                      padding: '10px 18px', 
-                      borderRadius: '5px', 
-                      cursor: yaPostulado ? 'default' : 'pointer', 
+                    disabled={yaPostulado || !trabajadorId}
+                    style={{
+                      background: '#00857A',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '10px 18px',
+                      borderRadius: '5px',
+                      cursor: (yaPostulado || !trabajadorId) ? 'default' : 'pointer',
                       fontWeight: 'bold',
-                      opacity: yaPostulado ? 0.85 : 1
+                      opacity: (yaPostulado || !trabajadorId) ? 0.65 : 1
                     }}
                   >
                     {yaPostulado ? 'Postulado ✓' : 'Postularme'}
