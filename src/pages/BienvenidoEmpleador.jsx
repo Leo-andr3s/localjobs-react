@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const BienvenidoEmpleador = () => {
-  const API_URL = process.env.REACT_APP_API_URL || 
-  "http://localhost:3001";
+  const API_URL = process.env.REACT_APP_API_URL ||
+    "http://localhost:3001";
 
   // Obtener la información del usuario logueado guardada en localStorage
   const usuarioGuardado = JSON.parse(localStorage.getItem('usuario')) || {};
-  
+
   const [vacantes, setVacantes] = useState([]);
   const [postulantes, setPostulantes] = useState([]);
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
-  
+  const [cargandoPostulantes, setCargandoPostulantes] = useState(false);
+
   // Estado para el formulario de publicar / editar vacante
   const [formData, setFormData] = useState({
     titulo: '',
@@ -105,50 +106,55 @@ const BienvenidoEmpleador = () => {
     setFormData({ titulo: '', descripcion: '', ubicacion: '', salario: '' });
   };
 
- // Función para eliminar vacante
- const eliminarVacante = async (id) => {
-  if (window.confirm('¿Estás seguro de que deseas eliminar esta vacante?')) {
-    try {
-      await axios.delete(`${API_URL}/vacantes/${id}`);
-      setMensaje('Vacante eliminada correctamente');
-      cargarVacantes();
-      if (vacanteSeleccionada) {
-        setVacanteSeleccionada(null);
-        setPostulantes([]);
+  // Función para eliminar vacante
+  const eliminarVacante = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar esta vacante?')) {
+      try {
+        await axios.delete(`${API_URL}/vacantes/${id}`);
+        setMensaje('Vacante eliminada correctamente');
+        cargarVacantes();
+        if (vacanteSeleccionada) {
+          setVacanteSeleccionada(null);
+          setPostulantes([]);
+        }
+      } catch (err) {
+        console.error('Error al eliminar:', err);
+        setError('No se pudo eliminar la vacante');
       }
-    } catch (err) {
-      console.error('Error al eliminar:', err);
-      setError('No se pudo eliminar la vacante');
     }
-  }
-};
+  };
 
-// Función para ver los postulantes de una vacante
-const verPostulantes = async (vacanteId, titulo) => {
-  try {
-    const res = await axios.get(`${API_URL}/vacantes/${vacanteId}/postulaciones`);
-    setPostulantes(res.data);
+  // Función para ver los postulantes de una vacante
+  const verPostulantes = async (vacanteId, titulo) => {
     setVacanteSeleccionada(titulo);
-  } catch (err) {
-    console.error('Error al obtener postulantes:', err);
-  }
-};
+    setPostulantes([]);
+    setCargandoPostulantes(true);
+    try {
+      const res = await axios.get(`${API_URL}/vacantes/${vacanteId}/postulaciones`);
+      setPostulantes(res.data);
+    } catch (err) {
+      console.error('Error al obtener postulantes:', err);
+      setPostulantes([]);
+    } finally {
+      setCargandoPostulantes(false);
+    }
+  };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f4f6f8', 
-      padding: '30px 20px', 
-      fontFamily: 'Inter, system-ui, sans-serif' 
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f4f6f8',
+      padding: '30px 20px',
+      fontFamily: 'Inter, system-ui, sans-serif'
     }}>
       <div style={{ maxWidth: '850px', margin: '0 auto' }}>
-        
+
         {/* Cabecera de Bienvenida */}
-        <div style={{ 
-          background: '#ffffff', 
-          padding: '25px 30px', 
-          borderRadius: '12px', 
-          marginBottom: '30px', 
+        <div style={{
+          background: '#ffffff',
+          padding: '25px 30px',
+          borderRadius: '12px',
+          marginBottom: '30px',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -161,14 +167,14 @@ const verPostulantes = async (vacanteId, titulo) => {
             </h2>
             <p style={{ color: '#666', margin: 0, fontSize: '14px' }}>Gestiona tus ofertas de trabajo y revisa postulantes en tiempo real.</p>
           </div>
-          <button 
+          <button
             onClick={() => { localStorage.clear(); window.location.href = '/'; }}
-            style={{ 
-              backgroundColor: '#ffebee', 
-              color: '#c62828', 
-              border: 'none', 
-              padding: '8px 16px', 
-              borderRadius: '6px', 
+            style={{
+              backgroundColor: '#ffebee',
+              color: '#c62828',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
               cursor: 'pointer',
               fontWeight: '600',
               fontSize: '13px'
@@ -179,11 +185,11 @@ const verPostulantes = async (vacanteId, titulo) => {
         </div>
 
         {/* FORMULARIO DE PUBLICACIÓN / EDICIÓN DE VACANTE */}
-        <div style={{ 
-          background: '#ffffff', 
-          padding: '30px', 
-          borderRadius: '12px', 
-          marginBottom: '35px', 
+        <div style={{
+          background: '#ffffff',
+          padding: '30px',
+          borderRadius: '12px',
+          marginBottom: '35px',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
           border: '1px solid #e0e0e0'
         }}>
@@ -204,11 +210,11 @@ const verPostulantes = async (vacanteId, titulo) => {
                 value={formData.titulo}
                 onChange={handleChange}
                 required
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  border: '1px solid #b2dfdb', 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #b2dfdb',
                   backgroundColor: '#f9fbfb',
                   fontSize: '15px',
                   boxSizing: 'border-box',
@@ -226,14 +232,14 @@ const verPostulantes = async (vacanteId, titulo) => {
                 onChange={handleChange}
                 required
                 rows="4"
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  borderRadius: '8px', 
-                  border: '1px solid #b2dfdb', 
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #b2dfdb',
                   backgroundColor: '#f9fbfb',
                   fontSize: '15px',
-                  boxSizing: 'border-box', 
+                  boxSizing: 'border-box',
                   resize: 'vertical',
                   outline: 'none'
                 }}
@@ -250,11 +256,11 @@ const verPostulantes = async (vacanteId, titulo) => {
                   value={formData.ubicacion}
                   onChange={handleChange}
                   required
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px', 
-                    borderRadius: '8px', 
-                    border: '1px solid #b2dfdb', 
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #b2dfdb',
                     backgroundColor: '#f9fbfb',
                     fontSize: '15px',
                     boxSizing: 'border-box',
@@ -272,11 +278,11 @@ const verPostulantes = async (vacanteId, titulo) => {
                   value={formData.salario}
                   onChange={handleChange}
                   required
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px', 
-                    borderRadius: '8px', 
-                    border: '1px solid #b2dfdb', 
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid #b2dfdb',
                     backgroundColor: '#f9fbfb',
                     fontSize: '15px',
                     boxSizing: 'border-box',
@@ -333,11 +339,11 @@ const verPostulantes = async (vacanteId, titulo) => {
           <p style={{ color: '#666', fontStyle: 'italic', background: '#fff', padding: '20px', borderRadius: '8px', textAlign: 'center' }}>No has publicado vacantes aún.</p>
         ) : (
           vacantes.map((v) => (
-            <div key={v.id} style={{ 
-              background: '#fff', 
-              padding: '20px', 
-              marginBottom: '15px', 
-              borderRadius: '10px', 
+            <div key={v.id} style={{
+              background: '#fff',
+              padding: '20px',
+              marginBottom: '15px',
+              borderRadius: '10px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               borderLeft: '5px solid #00897b',
               border: '1px solid #e0e0e0',
@@ -348,7 +354,7 @@ const verPostulantes = async (vacanteId, titulo) => {
               <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '13px' }}>
                 📍 <strong>Ubicación:</strong> {v.ubicacion} | 💰 <strong>Salario:</strong> ${v.salario} | 👥 <strong>Postulados:</strong> {v.total_postulaciones || 0}
               </p>
-              
+
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={() => verPostulantes(v.id, v.titulo)}
@@ -356,7 +362,7 @@ const verPostulantes = async (vacanteId, titulo) => {
                 >
                   Ver Postulados
                 </button>
-                
+
                 <button
                   onClick={() => iniciarEdicion(v)}
                   style={{ backgroundColor: '#ffa000', color: 'white', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
@@ -377,23 +383,53 @@ const verPostulantes = async (vacanteId, titulo) => {
 
         {/* SECCIÓN DE POSTULANTES */}
         {vacanteSeleccionada && (
-          <div style={{ 
-            marginTop: '35px', 
-            background: '#ffffff', 
-            padding: '25px', 
-            borderRadius: '12px', 
+          <div style={{
+            marginTop: '35px',
+            background: '#ffffff',
+            padding: '25px',
+            borderRadius: '12px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #b2dfdb' 
+            border: '1px solid #b2dfdb'
           }}>
             <h3 style={{ color: '#00897b', marginTop: 0, marginBottom: '15px' }}>👥 Candidatos para: {vacanteSeleccionada}</h3>
-            {postulantes.length === 0 ? (
+            {cargandoPostulantes ? (
+              <p style={{ color: '#666', fontStyle: 'italic', margin: 0 }}>Cargando candidatos...</p>
+            ) : postulantes.length === 0 ? (
               <p style={{ color: '#666', fontStyle: 'italic', margin: 0 }}>Aún no hay candidatos postulados a esta oferta.</p>
             ) : (
-              <ul style={{ paddingLeft: '20px', margin: 0 }}>
+              <ul style={{ paddingLeft: '0', listStyle: 'none', margin: 0 }}>
                 {postulantes.map((p) => (
-                  <li key={p.postulacion_id} style={{ marginBottom: '12px', color: '#333' }}>
-                    <strong>{p.nombre_completo}</strong> - <em style={{ color: '#00897b' }}>{p.oficio}</em> <br />
-                    <span style={{ fontSize: '13px', color: '#666' }}>📧 Email: {p.email} | 📞 Teléfono: {p.telefono} | 📍 Ciudad: {p.ciudad}</span>
+                  <li
+                    key={p.postulacion_id}
+                    style={{
+                      marginBottom: '12px',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      backgroundColor: '#f9fbfb',
+                      border: '1px solid #e0f2f1',
+                      color: '#333'
+                    }}
+                  >
+                    <div style={{ marginBottom: '6px' }}>
+                      <strong style={{ fontSize: '16px' }}>{p.nombre_completo || 'Sin nombre'}</strong>
+                      {p.oficio && <span style={{ color: '#00897b', fontWeight: '600', marginLeft: '8px' }}>• {p.oficio}</span>}
+                      {p.estado_postulacion && (
+                        <span style={{ marginLeft: '8px', fontSize: '12px', color: '#0288d1', fontWeight: '600' }}>
+                          ({p.estado_postulacion})
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+                      📧 <strong>Email:</strong> {p.email || 'No registrado'} | 📞 <strong>Teléfono:</strong> {p.telefono || 'No registrado'} | 📍 <strong>Ciudad:</strong> {p.ciudad || 'No registrada'}
+                      <br />
+                      🏢 <strong>Empresa:</strong> {p.empresa || 'No registrada'}
+                      {p.fecha_postulacion && (
+                        <> | 🗓️ <strong>Postulado:</strong> {new Date(p.fecha_postulacion).toLocaleString()}</>
+                      )}
+                      {p.fecha_registro && (
+                        <> | 📝 <strong>Registrado:</strong> {new Date(p.fecha_registro).toLocaleDateString()}</>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>

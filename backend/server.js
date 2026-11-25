@@ -16,8 +16,8 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-    if (err) console.error("❌ Error de conexión:", err.message);
-    else console.log("✅ Conectado a la DB Base_Datos_Proyecto_localjobs");
+  if (err) console.error("❌ Error de conexión:", err.message);
+  else console.log("✅ Conectado a la DB Base_Datos_Proyecto_localjobs");
 });
 
 // Ruta raíz para verificar estado del servidor
@@ -32,14 +32,14 @@ app.get("/", (req, res) => {
 // Endpoint del Login (Unificado con la estructura correcta de columnas)
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  
+
   const query = `
-    SELECT 'trabajador' AS tipo, id, nombre_completo AS nombre, empresa 
-    FROM FormularioTrabajador 
+    SELECT 'trabajador' AS tipo, id, nombre_completo AS nombre, empresa
+    FROM FormularioTrabajador
     WHERE email = ? AND password = ?
     UNION
-    SELECT 'empleador' AS tipo, id, nombre_completo AS nombre, empresa 
-    FROM FormularioEmpleador 
+    SELECT 'empleador' AS tipo, id, nombre_completo AS nombre, empresa
+    FROM FormularioEmpleador
     WHERE email = ? AND password = ?
   `;
 
@@ -62,66 +62,66 @@ app.post("/login", (req, res) => {
 
 // Registrar Trabajador
 app.post('/registrar-trabajador', (req, res) => {
-    const { nombre_completo, email, password, telefono, ciudad, oficio, empresa } = req.body;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const { nombre_completo, email, password, telefono, ciudad, oficio, empresa } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email || !emailRegex.test(email)) {
-        return res.status(400).json({ error: "El formato del correo electrónico es inválido." });
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ error: "El formato del correo electrónico es inválido." });
+  }
+
+  const sql = `INSERT INTO FormularioTrabajador (nombre_completo, email, password, telefono, ciudad, oficio, empresa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(sql, [nombre_completo, email, password, telefono, ciudad, oficio, empresa || null], (err) => {
+    if (err) {
+      console.error("Error al registrar trabajador:", err);
+      return res.status(500).json({ error: "Error al registrar" });
     }
-
-    const sql = `INSERT INTO FormularioTrabajador (nombre_completo, email, password, telefono, ciudad, oficio, empresa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    
-    db.query(sql, [nombre_completo, email, password, telefono, ciudad, oficio, empresa || null], (err) => {
-        if (err) {
-          console.error("Error al registrar trabajador:", err);
-          return res.status(500).json({ error: "Error al registrar" });
-        }
-        res.status(200).json({ message: "Trabajador registrado con éxito" });
-    });
+    res.status(200).json({ message: "Trabajador registrado con éxito" });
+  });
 });
 
 // Registrar Empleador (Adaptado a las nuevas columnas de la Opción 1)
 app.post('/registrar-empleador', (req, res) => {
-  const { 
-      nombre_empresa, 
-      tipo_documento, 
-      numero_documento, 
-      telefono, 
-      ubicacion, 
-      email, 
-      password 
+  const {
+    nombre_empresa,
+    tipo_documento,
+    numero_documento,
+    telefono,
+    ubicacion,
+    email,
+    password
   } = req.body;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!email || !emailRegex.test(email)) {
-      return res.status(400).json({ error: "El formato del correo electrónico es inválido." });
+    return res.status(400).json({ error: "El formato del correo electrónico es inválido." });
   }
 
   // Consulta adaptada para guardar todos los datos detallados en la tabla
   const sql = `
-      INSERT INTO FormularioEmpleador 
-      (empresa, nombre_completo, tipo_documento, numero_documento, telefono, ubicacion, email, password) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO FormularioEmpleador
+    (empresa, nombre_completo, tipo_documento, numero_documento, telefono, ubicacion, email, password)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
-  
+
   // Guardamos 'nombre_empresa' tanto en la columna 'empresa' como en 'nombre_completo' para compatibilidad con el Login
   db.query(sql, [nombre_empresa, nombre_empresa, tipo_documento, numero_documento, telefono, ubicacion, email, password], (err, result) => {
-      if (err) {
-        console.error("Error al registrar empleador:", err);
-        return res.status(500).json({ error: "Error al registrar en la base de datos" });
+    if (err) {
+      console.error("Error al registrar empleador:", err);
+      return res.status(500).json({ error: "Error al registrar en la base de datos" });
+    }
+
+    // Devolvemos el éxito y los datos del usuario para el auto-login
+    res.status(200).json({
+      message: "Empleador registrado con éxito",
+      usuario: {
+        id: result.insertId,
+        empresa: nombre_empresa,
+        nombre: nombre_empresa,
+        email: email
       }
-      
-      // Devolvemos el éxito y los datos del usuario para el auto-login
-      res.status(200).json({ 
-          message: "Empleador registrado con éxito",
-          usuario: {
-              id: result.insertId,
-              empresa: nombre_empresa,
-              nombre: nombre_empresa,
-              email: email
-          }
-      });
+    });
   });
 });
 
@@ -177,7 +177,7 @@ app.get('/vacantes', (req, res) => {
     JOIN FormularioEmpleador e ON v.empleador_id = e.id
     ORDER BY v.id DESC
   `;
-  
+
   db.query(sql, (err, rows) => {
     if (err) {
       console.error('Error al obtener las vacantes:', err);
@@ -189,25 +189,25 @@ app.get('/vacantes', (req, res) => {
 
 // Publicar una nueva vacante
 app.post('/vacantes', (req, res) => {
-    const { empleador_id, titulo, descripcion, ubicacion, salario } = req.body;
+  const { empleador_id, titulo, descripcion, ubicacion, salario } = req.body;
 
-    const sql = `INSERT INTO Vacantes (empleador_id, titulo, descripcion, ubicacion, salario) VALUES (?, ?, ?, ?, ?)`;
-    
-    db.query(sql, [empleador_id, titulo, descripcion, ubicacion, salario], (err, result) => {
-        if (err) {
-          console.error("Error al publicar vacante:", err);
-          return res.status(500).json({ error: "Error al guardar la vacante en la base de datos" });
-        }
-        res.status(201).json({ message: "Vacante publicada con éxito", id: result.insertId });
-    });
+  const sql = `INSERT INTO Vacantes (empleador_id, titulo, descripcion, ubicacion, salario) VALUES (?, ?, ?, ?, ?)`;
+
+  db.query(sql, [empleador_id, titulo, descripcion, ubicacion, salario], (err, result) => {
+    if (err) {
+      console.error("Error al publicar vacante:", err);
+      return res.status(500).json({ error: "Error al guardar la vacante en la base de datos" });
+    }
+    res.status(201).json({ message: "Vacante publicada con éxito", id: result.insertId });
+  });
 });
 
 // Obtener vacantes publicadas por un empleador específico
 app.get('/vacantes/empleador/:empleadorId', (req, res) => {
   const { empleadorId } = req.params;
   const sql = `
-    SELECT 
-      v.*, 
+    SELECT
+      v.*,
       COUNT(p.id) AS total_postulaciones
     FROM Vacantes v
     LEFT JOIN postulaciones p ON v.id = p.vacante_id
@@ -215,7 +215,7 @@ app.get('/vacantes/empleador/:empleadorId', (req, res) => {
     GROUP BY v.id
     ORDER BY v.id DESC
   `;
-  
+
   db.query(sql, [empleadorId], (err, rows) => {
     if (err) {
       console.error('Error al obtener vacantes del empleador:', err);
@@ -225,23 +225,29 @@ app.get('/vacantes/empleador/:empleadorId', (req, res) => {
   });
 });
 
-// Obtener postulantes de una vacante específica
+// Obtener postulantes de una vacante específica con toda su información disponible
 app.get('/vacantes/:id/postulaciones', (req, res) => {
   const vacanteId = req.params.id;
   const sql = `
-    SELECT 
-      p.id AS postulacion_id, 
-      t.id AS trabajador_id, 
-      t.nombre_completo, 
-      t.email, 
-      t.telefono, 
-      t.ciudad, 
-      t.oficio
+    SELECT
+      p.id AS postulacion_id,
+      p.vacante_id,
+      p.estado AS estado_postulacion,
+      p.fecha_postulacion,
+      t.id AS trabajador_id,
+      t.nombre_completo,
+      t.email,
+      t.telefono,
+      t.ciudad,
+      t.oficio,
+      t.empresa,
+      t.fecha_registro
     FROM postulaciones p
     JOIN FormularioTrabajador t ON p.trabajador_id = t.id
     WHERE p.vacante_id = ?
+    ORDER BY p.id DESC
   `;
-  
+
   db.query(sql, [vacanteId], (err, rows) => {
     if (err) {
       console.error('Error al obtener postulantes:', err);
@@ -260,7 +266,7 @@ app.post('/postulaciones', (req, res) => {
   const { vacante_id, trabajador_id } = req.body;
 
   const sql = `INSERT INTO postulaciones (vacante_id, trabajador_id) VALUES (?, ?)`;
-  
+
   db.query(sql, [vacante_id, trabajador_id], (err, result) => {
     if (err) {
       if (err.code === 'ER_DUP_ENTRY') {
@@ -277,7 +283,7 @@ app.post('/postulaciones', (req, res) => {
 app.get('/postulaciones/trabajador/:trabajadorId', (req, res) => {
   const { trabajadorId } = req.params;
   const sql = `SELECT * FROM postulaciones WHERE trabajador_id = ?`;
-  
+
   db.query(sql, [trabajadorId], (err, rows) => {
     if (err) {
       console.error('Error al obtener postulaciones del trabajador:', err);
