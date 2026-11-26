@@ -1,6 +1,6 @@
 import "../styles/Inicio.css";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 // ✅ IMPORTAR LOGO
@@ -20,12 +20,15 @@ function Inicio() {
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
+  const [todasLasVacantes, setTodasLasVacantes] = useState([]);
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
-  const [resultados, setResultados] = useState([]);
-  const [busquedaRealizada, setBusquedaRealizada] = useState(false);
-  const [buscando, setBuscando] = useState(false);
-  const [errorBusqueda, setErrorBusqueda] = useState("");
+  const [mostrarLista, setMostrarLista] = useState(false);
+  const [cargandoVacantes, setCargandoVacantes] = useState(false);
+  const [errorCarga, setErrorCarga] = useState("");
 
+  const buscadorRef = useRef(null);
+
+  // Efecto de rotación de imágenes de fondo
   useEffect(() => {
     const imagenes = [
       plomero,
@@ -39,6 +42,7 @@ function Inicio() {
     ];
 
     const hero = document.querySelector(".hero");
+    if (!hero) return;
     let overlayActual = null;
 
     function cambiarFondo() {
@@ -66,43 +70,67 @@ function Inicio() {
     return () => clearInterval(intervalo);
   }, []);
 
-  const handleBuscar = async (e) => {
-    e.preventDefault();
-    setErrorBusqueda("");
-    setBuscando(true);
-    setBusquedaRealizada(true);
+  // Cargar las vacantes disponibles al abrir la página de inicio
+  useEffect(() => {
+    cargarVacantes();
+  }, []);
 
+  // Cerrar el desplegable si el usuario hace clic fuera del buscador
+  useEffect(() => {
+    const manejarClicExterno = (event) => {
+      if (buscadorRef.current && !buscadorRef.current.contains(event.target)) {
+        setMostrarLista(false);
+      }
+    };
+    document.addEventListener("mousedown", manejarClicExterno);
+    return () => document.removeEventListener("mousedown", manejarClicExterno);
+  }, []);
+
+  const cargarVacantes = async () => {
+    setCargandoVacantes(true);
+    setErrorCarga("");
     try {
       const res = await axios.get(`${API_URL}/vacantes`);
-      const todasLasVacantes = Array.isArray(res.data) ? res.data : [];
-      const texto = terminoBusqueda.trim().toLowerCase();
-
-      if (!texto) {
-        setResultados(todasLasVacantes);
-      } else {
-        const filtradas = todasLasVacantes.filter((v) =>
-          (v.titulo || "").toLowerCase().includes(texto) ||
-          (v.nombre_empresa || "").toLowerCase().includes(texto) ||
-          (v.nombre_empleador || "").toLowerCase().includes(texto) ||
-          (v.ubicacion || "").toLowerCase().includes(texto) ||
-          (v.descripcion || "").toLowerCase().includes(texto)
-        );
-        setResultados(filtradas);
-      }
+      setTodasLasVacantes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Error al buscar vacantes:", err);
-      setErrorBusqueda("No se pudieron cargar las vacantes en este momento.");
-      setResultados([]);
+      console.error("Error al cargar vacantes en inicio:", err);
+      setErrorCarga("No se pudieron cargar las vacantes.");
     } finally {
-      setBuscando(false);
+      setCargandoVacantes(false);
     }
   };
 
-  const limpiarBusqueda = () => {
-    setTerminoBusqueda("");
-    setResultados([]);
-    setBusquedaRealizada(false);
-    setErrorBusqueda("");
+  // Normalizar texto para comparar sin problemas de mayúsculas o acentos
+  const normalizar = (str) =>
+    (str || "")
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const textoNormalizado = normalizar(terminoBusqueda.trim());
+
+  const vacantesFiltradas = todasLasVacantes.filter((v) => {
+    if (!textoNormalizado) return true;
+    return (
+      normalizar(v.titulo).includes(textoNormalizado) ||
+      normalizar(v.nombre_empresa).includes(textoNormalizado) ||
+      normalizar(v.nombre_empleador).includes(textoNormalizado) ||
+      normalizar(v.ubicacion).includes(textoNormalizado) ||
+      normalizar(v.descripcion).includes(textoNormalizado)
+    );
+  });
+
+  const handleAbrirBuscador = () => {
+    setMostrarLista(true);
+    if (todasLasVacantes.length === 0 && !cargandoVacantes) {
+      cargarVacantes();
+    }
+  };
+
+  const handleSubmitBusqueda = (e) => {
+    e.preventDefault();
+    handleAbrirBuscador();
   };
 
   return (
@@ -118,12 +146,18 @@ function Inicio() {
         <nav>
           <ul>
             <li><Link to="/">Inicio</Link></li>
-            <li><a href="#resultados-busqueda" onClick={(e) => {
-              if (!busquedaRealizada) {
-                e.preventDefault();
-                document.querySelector(".search-box input")?.focus();
-              }
-            }}>Empleos</a></li>
+            <li>
+              <a
+                href="#buscar"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleAbrirBuscador();
+                  buscadorRef.current?.querySelector("input")?.focus();
+                }}
+              >
+                Empleos
+              </a>
+            </li>
             <li><Link to="/registro">Empresas</Link></li>
             <li><a href="#contacto-footer">Contacto</a></li>
           </ul>
@@ -136,8 +170,8 @@ function Inicio() {
       </header>
 
       {/* HERO */}
-      <section className="hero">
-        <div className="hero-content">
+      <section className="hero" style={{ overflow: "visible" }}>
+        <div className="hero-content" style={{ position: "relative", zIndex: 5 }}>
           <h1>
             Encuentra el trabajo ideal <span className="resaltar">cerca de ti</span>
           </h1>
@@ -146,127 +180,158 @@ function Inicio() {
             Conecta con empresas locales y descubre oportunidades laborales en tu zona.
           </p>
 
-          <form className="search-box" onSubmit={handleBuscar}>
-            <input
-              type="text"
-              placeholder="Buscar empleo o empresa..."
-              value={terminoBusqueda}
-              onChange={(e) => setTerminoBusqueda(e.target.value)}
-            />
-            <button type="submit" disabled={buscando}>
-              {buscando ? "Buscando..." : "Buscar"}
-            </button>
-          </form>
-        </div>
-      </section>
+          {/* CONTENEDOR RELATIVO PARA LA BARRA Y SU DESPLEGABLE */}
+          <div
+            ref={buscadorRef}
+            style={{
+              position: "relative",
+              maxWidth: "560px",
+              margin: "0 auto",
+              width: "100%"
+            }}
+          >
+            <form className="search-box" onSubmit={handleSubmitBusqueda} style={{ margin: 0 }}>
+              <input
+                type="text"
+                placeholder="Buscar empleo o empresa..."
+                value={terminoBusqueda}
+                onFocus={handleAbrirBuscador}
+                onClick={handleAbrirBuscador}
+                onChange={(e) => {
+                  setTerminoBusqueda(e.target.value);
+                  setMostrarLista(true);
+                }}
+                autoComplete="off"
+              />
+              <button type="submit">Buscar</button>
+            </form>
 
-      {/* RESULTADOS DE BÚSQUEDA */}
-      {busquedaRealizada && (
-        <section
-          id="resultados-busqueda"
-          style={{
-            maxWidth: "900px",
-            margin: "35px auto",
-            padding: "0 20px"
-          }}
-        >
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "10px",
-            marginBottom: "16px"
-          }}>
-            <h2 style={{ margin: 0, color: "#00857A", fontSize: "1.4rem" }}>
-              {terminoBusqueda.trim()
-                ? `Resultados para "${terminoBusqueda.trim()}" (${resultados.length})`
-                : `Todas las vacantes disponibles (${resultados.length})`}
-            </h2>
-            <button
-              type="button"
-              onClick={limpiarBusqueda}
-              style={{
-                background: "#eceff1",
-                color: "#333",
-                border: "1px solid #cfd8dc",
-                padding: "7px 14px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontWeight: "600",
-                fontSize: "0.9rem"
-              }}
-            >
-              Cerrar búsqueda
-            </button>
-          </div>
-
-          {errorBusqueda && (
-            <p style={{ color: "#c62828", fontWeight: "600" }}>{errorBusqueda}</p>
-          )}
-
-          {!buscando && resultados.length === 0 && !errorBusqueda ? (
-            <div style={{
-              background: "#fff",
-              border: "1px solid #ddd",
-              padding: "20px",
-              borderRadius: "8px",
-              textAlign: "center",
-              color: "#555"
-            }}>
-              No encontramos vacantes que coincidan con tu búsqueda. Intenta con otra palabra o empresa.
-            </div>
-          ) : (
-            <div style={{ display: "grid", gap: "15px" }}>
-              {resultados.map((v) => (
+            {/* LISTA DESPLEGABLE DE VACANTES EN TIEMPO REAL */}
+            {mostrarLista && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 8px)",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#ffffff",
+                  color: "#222",
+                  borderRadius: "10px",
+                  boxShadow: "0 10px 28px rgba(0, 0, 0, 0.25)",
+                  border: "1px solid #d0d7de",
+                  zIndex: 9999,
+                  maxHeight: "340px",
+                  overflowY: "auto",
+                  textAlign: "left"
+                }}
+              >
+                {/* Encabezado del desplegable */}
                 <div
-                  key={v.id}
                   style={{
-                    background: "#fff",
-                    border: "1px solid #ddd",
-                    borderLeft: "5px solid #00857A",
-                    padding: "18px 20px",
-                    borderRadius: "8px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.05)"
+                    padding: "10px 14px",
+                    borderBottom: "1px solid #eee",
+                    backgroundColor: "#f8fafb",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "0.85rem",
+                    color: "#555",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 2
                   }}
                 >
-                  <h3 style={{ margin: "0 0 6px 0", color: "#00857A", fontSize: "1.15rem" }}>
-                    {v.titulo}
-                  </h3>
-                  <p style={{ margin: "4px 0", fontSize: "0.95rem" }}>
-                    <strong>Empresa:</strong> {v.nombre_empresa || v.nombre_empleador || "Empresa local"}
-                  </p>
-                  <p style={{ margin: "4px 0", fontSize: "0.95rem" }}>
-                    <strong>Ubicación:</strong> {v.ubicacion || "No especificada"}
-                  </p>
-                  <p style={{ margin: "4px 0", fontSize: "0.95rem" }}>
-                    <strong>Salario:</strong> {v.salario || "A convenir"}
-                  </p>
-                  <p style={{ margin: "10px 0 14px 0", color: "#444", fontSize: "0.95rem" }}>
-                    {v.descripcion}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => navigate("/login")}
-                    style={{
-                      background: "#00857A",
-                      color: "#fff",
-                      border: "none",
-                      padding: "9px 16px",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                      fontSize: "0.9rem"
-                    }}
-                  >
-                    Iniciar sesión para postularte
-                  </button>
+                  <span>
+                    {cargandoVacantes
+                      ? "Cargando vacantes..."
+                      : `${vacantesFiltradas.length} ${vacantesFiltradas.length === 1 ? "resultado" : "resultados"}`}
+                  </span>
+                  {terminoBusqueda && (
+                    <button
+                      type="button"
+                      onClick={() => setTerminoBusqueda("")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#00857A",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        fontSize: "0.82rem",
+                        padding: 0
+                      }}
+                    >
+                      Limpiar texto
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
+
+                {/* Cuerpo del desplegable */}
+                {cargandoVacantes ? (
+                  <div style={{ padding: "18px", textAlign: "center", color: "#666", fontSize: "0.95rem" }}>
+                    Buscando ofertas disponibles...
+                  </div>
+                ) : errorCarga ? (
+                  <div style={{ padding: "18px", textAlign: "center", color: "#c62828", fontSize: "0.95rem" }}>
+                    {errorCarga}
+                  </div>
+                ) : vacantesFiltradas.length === 0 ? (
+                  <div style={{ padding: "22px 16px", textAlign: "center", color: "#555" }}>
+                    <strong style={{ display: "block", fontSize: "1rem", color: "#222", marginBottom: "4px" }}>
+                      0 resultados
+                    </strong>
+                    <span style={{ fontSize: "0.88rem" }}>
+                      No hay vacantes disponibles que coincidan con "{terminoBusqueda}".
+                    </span>
+                  </div>
+                ) : (
+                  vacantesFiltradas.map((v) => (
+                    <div
+                      key={v.id}
+                      onClick={() => navigate("/login")}
+                      style={{
+                        padding: "12px 16px",
+                        borderBottom: "1px solid #f0f0f0",
+                        cursor: "pointer",
+                        transition: "background-color 0.15s ease"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f1f9f8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                        <strong style={{ color: "#00857A", fontSize: "1rem" }}>{v.titulo}</strong>
+                        <span style={{ fontSize: "0.82rem", fontWeight: "600", color: "#2e7d32" }}>
+                          {v.salario ? `$${v.salario}` : "A convenir"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.85rem", color: "#444", marginTop: "3px" }}>
+                        <strong>Empresa:</strong> {v.nombre_empresa || v.nombre_empleador || "Empresa local"} •{" "}
+                        <strong>Ubicación:</strong> {v.ubicacion || "No especificada"}
+                      </div>
+                      {v.descripcion && (
+                        <div
+                          style={{
+                            fontSize: "0.82rem",
+                            color: "#666",
+                            marginTop: "4px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis"
+                          }}
+                        >
+                          {v.descripcion}
+                        </div>
+                      )}
+                      <div style={{ fontSize: "0.78rem", color: "#00857A", fontWeight: "600", marginTop: "5px" }}>
+                        Clic para iniciar sesión y postularte →
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* FEATURES */}
       <section className="features">
