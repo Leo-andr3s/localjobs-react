@@ -284,7 +284,7 @@ app.get('/vacantes/:id/postulaciones', (req, res) => {
 });
 
 // -------------------------------------------------------------
-// RUTAS DE POSTULACIONES (Para el panel del trabajador)
+// RUTAS DE POSTULACIONES (Para el panel del trabajador y gestión del empleador)
 // -------------------------------------------------------------
 
 // Registrar una postulación de un trabajador a una vacante
@@ -319,6 +319,37 @@ app.get('/postulaciones/trabajador/:trabajadorId', (req, res) => {
   });
 });
 
+// Actualizar el estado de una postulación (pendiente, en_revision, aceptado, no_seleccionado)
+app.patch('/postulaciones/:id/estado', (req, res) => {
+  const postulacionId = req.params.id;
+  const { estado } = req.body;
+
+  const estadosPermitidos = ['pendiente', 'en_revision', 'aceptado', 'no_seleccionado'];
+  if (!estado || !estadosPermitidos.includes(estado)) {
+    return res.status(400).json({
+      error: 'Estado inválido. Usa: pendiente, en_revision, aceptado o no_seleccionado.'
+    });
+  }
+
+  const sql = `UPDATE postulaciones SET estado = ? WHERE id = ?`;
+
+  db.query(sql, [estado, postulacionId], (err, result) => {
+    if (err) {
+      console.error('Error al actualizar el estado de la postulación:', err);
+      return res.status(500).json({ error: 'Error al actualizar el estado de la postulación' });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Postulación no encontrada' });
+    }
+    res.json({
+      message: 'Estado de postulación actualizado con éxito',
+      postulacion_id: Number(postulacionId),
+      estado_postulacion: estado
+    });
+  });
+});
+
 // Puerto dinámico para Render con fallback a 3001 local
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`🚀 Servidor de LocalJobs ejecutándose en el puerto ${PORT}`));
+

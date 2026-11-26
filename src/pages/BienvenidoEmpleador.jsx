@@ -12,6 +12,8 @@ const BienvenidoEmpleador = () => {
   const [postulantes, setPostulantes] = useState([]);
   const [vacanteSeleccionada, setVacanteSeleccionada] = useState(null);
   const [cargandoPostulantes, setCargandoPostulantes] = useState(false);
+  const [vacantePorEliminar, setVacantePorEliminar] = useState(null);
+  const [actualizandoEstadoId, setActualizandoEstadoId] = useState(null);
 
   // Estado para el formulario de publicar / editar vacante
   const [formData, setFormData] = useState({
@@ -106,21 +108,32 @@ const BienvenidoEmpleador = () => {
     setFormData({ titulo: '', descripcion: '', ubicacion: '', salario: '' });
   };
 
-  // Función para eliminar vacante
-  const eliminarVacante = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta vacante?')) {
-      try {
-        await axios.delete(`${API_URL}/vacantes/${id}`);
-        setMensaje('Vacante eliminada correctamente');
-        cargarVacantes();
-        if (vacanteSeleccionada) {
-          setVacanteSeleccionada(null);
-          setPostulantes([]);
-        }
-      } catch (err) {
-        console.error('Error al eliminar:', err);
-        setError('No se pudo eliminar la vacante');
+  // Solicitar confirmación visual para eliminar vacante
+  const solicitarEliminarVacante = (vacante) => {
+    setMensaje('');
+    setError('');
+    setVacantePorEliminar(vacante);
+  };
+
+  // Confirmar y ejecutar eliminación de vacante
+  const confirmarEliminarVacante = async () => {
+    if (!vacantePorEliminar) return;
+    const id = vacantePorEliminar.id;
+    const tituloEliminado = vacantePorEliminar.titulo;
+
+    try {
+      await axios.delete(`${API_URL}/vacantes/${id}`);
+      setMensaje(`Vacante "${tituloEliminado}" eliminada correctamente.`);
+      setVacantePorEliminar(null);
+      cargarVacantes();
+      if (vacanteSeleccionada === tituloEliminado) {
+        setVacanteSeleccionada(null);
+        setPostulantes([]);
       }
+    } catch (err) {
+      console.error('Error al eliminar:', err);
+      setError('No se pudo eliminar la vacante');
+      setVacantePorEliminar(null);
     }
   };
 
@@ -137,6 +150,32 @@ const BienvenidoEmpleador = () => {
       setPostulantes([]);
     } finally {
       setCargandoPostulantes(false);
+    }
+  };
+
+  // Actualizar estado de un candidato
+  const cambiarEstadoPostulacion = async (postulacionId, nuevoEstado) => {
+    setMensaje('');
+    setError('');
+    setActualizandoEstadoId(postulacionId);
+    try {
+      await axios.patch(`${API_URL}/postulaciones/${postulacionId}/estado`, {
+        estado: nuevoEstado
+      });
+
+      setPostulantes((prev) =>
+        prev.map((item) =>
+          item.postulacion_id === postulacionId
+            ? { ...item, estado_postulacion: nuevoEstado }
+            : item
+        )
+      );
+      setMensaje('Estado del candidato actualizado.');
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+      setError(err.response?.data?.error || 'No se pudo actualizar el estado del candidato.');
+    } finally {
+      setActualizandoEstadoId(null);
     }
   };
 
@@ -199,6 +238,60 @@ const BienvenidoEmpleador = () => {
 
           {mensaje && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '12px', borderRadius: '6px', marginBottom: '20px', fontSize: '14px', fontWeight: 'bold', textAlign: 'center' }}>{mensaje}</div>}
           {error && <div style={{ background: '#ffebee', color: '#c62828', padding: '12px', borderRadius: '6px', marginBottom: '20px', fontSize: '14px', fontWeight: 'bold', textAlign: 'center' }}>{error}</div>}
+
+          {vacantePorEliminar && (
+            <div style={{
+              background: '#fff8e1',
+              border: '1px solid #ffe082',
+              color: '#5d4037',
+              padding: '14px 18px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              flexWrap: 'wrap'
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: '600' }}>
+                ¿Deseas eliminar la vacante "{vacantePorEliminar.titulo}"? Esta acción no se puede deshacer.
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={confirmarEliminarVacante}
+                  style={{
+                    backgroundColor: '#d32f2f',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Sí, eliminar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVacantePorEliminar(null)}
+                  style={{
+                    backgroundColor: '#757575',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '18px' }}>
@@ -371,7 +464,7 @@ const BienvenidoEmpleador = () => {
                 </button>
 
                 <button
-                  onClick={() => eliminarVacante(v.id)}
+                  onClick={() => solicitarEliminarVacante(v)}
                   style={{ backgroundColor: '#d32f2f', color: 'white', border: 'none', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
                 >
                   Eliminar
@@ -410,14 +503,33 @@ const BienvenidoEmpleador = () => {
                       color: '#333'
                     }}
                   >
-                    <div style={{ marginBottom: '6px' }}>
+                    <div style={{ marginBottom: '6px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
                       <strong style={{ fontSize: '16px' }}>{p.nombre_completo || 'Sin nombre'}</strong>
-                      {p.oficio && <span style={{ color: '#00897b', fontWeight: '600', marginLeft: '8px' }}>• {p.oficio}</span>}
-                      {p.estado_postulacion && (
-                        <span style={{ marginLeft: '8px', fontSize: '12px', color: '#0288d1', fontWeight: '600' }}>
-                          ({p.estado_postulacion})
-                        </span>
-                      )}
+                      {p.oficio && <span style={{ color: '#00897b', fontWeight: '600' }}>• {p.oficio}</span>}
+                      <span style={{ fontSize: '12px', color: '#0288d1', fontWeight: '600' }}>
+                        ({p.estado_postulacion || 'pendiente'})
+                      </span>
+                      <select
+                        value={p.estado_postulacion || 'pendiente'}
+                        disabled={actualizandoEstadoId === p.postulacion_id}
+                        onChange={(e) => cambiarEstadoPostulacion(p.postulacion_id, e.target.value)}
+                        style={{
+                          marginLeft: 'auto',
+                          padding: '5px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid #b2dfdb',
+                          backgroundColor: '#fff',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          color: '#333',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_revision">En revisión</option>
+                        <option value="aceptado">Aceptado</option>
+                        <option value="no_seleccionado">No seleccionado</option>
+                      </select>
                     </div>
                     <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
                       📧 <strong>Email:</strong> {p.email || 'No registrado'} | 📞 <strong>Teléfono:</strong> {p.telefono || 'No registrado'} | 📍 <strong>Ciudad:</strong> {p.ciudad || 'No registrada'}
