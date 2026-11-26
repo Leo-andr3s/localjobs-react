@@ -305,10 +305,29 @@ app.post('/postulaciones', (req, res) => {
   });
 });
 
-// Obtener las postulaciones hechas por un trabajador específico
+// Obtener las postulaciones hechas por un trabajador específico con datos de la vacante y empresa
 app.get('/postulaciones/trabajador/:trabajadorId', (req, res) => {
   const { trabajadorId } = req.params;
-  const sql = `SELECT * FROM postulaciones WHERE trabajador_id = ?`;
+  const sql = `
+    SELECT
+      p.id AS postulacion_id,
+      p.vacante_id,
+      p.trabajador_id,
+      p.estado,
+      p.fecha_postulacion,
+      v.titulo AS titulo_vacante,
+      v.ubicacion,
+      v.salario,
+      e.empresa AS nombre_empresa,
+      e.nombre_completo AS nombre_empleador,
+      e.telefono AS telefono_empresa,
+      e.email AS email_empresa
+    FROM postulaciones p
+    JOIN Vacantes v ON p.vacante_id = v.id
+    JOIN FormularioEmpleador e ON v.empleador_id = e.id
+    WHERE p.trabajador_id = ?
+    ORDER BY p.id DESC
+  `;
 
   db.query(sql, [trabajadorId], (err, rows) => {
     if (err) {
